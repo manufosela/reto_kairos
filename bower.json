@@ -1,0 +1,21 @@
+{
+  "name": "reto_kairos",
+  "homepage": "https://github.com/manufosela/reto_kairos",
+  "authors": [
+    "@manufosela"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "^1.4.0"
+  }
+}
