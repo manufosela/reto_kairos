@@ -1,0 +1,311 @@
+/**
+  * TODO: mostrar slidethumbnails y navegar
+  *       carga dinámica de json de elementos del slide
+  *       hacer kds-slideshowgroup e integrar varios kds-slideshow
+  *       analizar slide-element-size para ver si lleva unidades y usarlas
+  * NOTES:para usar varios slideshow, el principal tendrá sus elementos con z-index mayor
+  *       los controles solo se mostraran en el declarado como principal en el kds-slideshowgroup
+**/
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/components/kds-control-behavior.html">
+<dom-module id="kds-slideshow">
+  <template>
+    <style>
+      :host{
+        width:0;
+        height:0;
+        position:absolute; top:0; left:150px;
+        overflow:hidden;
+      }
+      :host ::content img, :host ::content div {
+        width: 100%;
+        height:100%;
+        position: absolute;
+        left: 100%;
+        top: 0;
+        z-index: 10;
+      }
+      :host ::content label {
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        position: absolute;
+        top: 50%;
+        margin-top: -20px;
+        display: block;
+        z-index: 20;
+        cursor: pointer;
+        font: normal 40px/40px 'playerregular';
+        color: #000;
+        background: rgba(255,255,255,0.7);
+        border-radius: 40px;
+        font-weight:bold;
+        opacity: 0;
+      }
+      :host ::content .navCtrl{
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 95%;
+        width: 100%;
+        text-align: center;
+        z-index: 100;
+        opacity: 0;
+      }
+      :host p { background:#F00; color:#FF0; z-index:10; }
+      :host ::content label.labLeft { left:5px; }
+      :host ::content label.labRight { right:5px; }
+    </style>
+    <content></content>
+  </template>
+
+  <script type="text/javascript">
+    Polymer({
+      is: 'kds-slideshow',
+      behaviors:[Polymer.KdsControlBehavior],
+      properties:{
+        imgs:{
+          type: Object
+        },
+        slideElementSize:{ // renombrar a frameSize?
+          type: Number,
+          value: 0
+        },
+        slideElementSizeX:{
+          type: Number,
+          value:0
+        },
+        slideElementSizeY:{
+          type: Number,
+          value:0
+        },
+        elActive:{
+          type: Number,
+          value: 0
+        },
+        direction:{
+          type: String,
+          value: 'left-right'  // right-left, left-up, left-down, right-up, right-down, up-down
+        },
+        controlArrows:{
+          type: Boolean,
+          value: false
+        },
+        controlNav:{
+          type: String,   // "true", "false", "carousel"
+          value:"false"
+        },
+        autoplay:{
+          type: Number,
+          value: 0    // Value in milisecs between slides. 0 no autoplay
+        },
+        _numImgs:{
+          type: Number,
+          value: 0
+        },
+        _dirBye:{
+          type: String, // right or left
+          value:"right"
+        },
+        _dirHello:{
+          type: String,
+          value:"left" // up, down, left, right
+        }
+      },
+      listeners:{
+        'mouseover': '_showElActiveControls',
+        'mouseout': '_hideElActiveControls'
+      },
+      _showElActiveControls:function(e){
+        if (this.controlArrows) {
+          this._ctrlArrowView("show");
+        }
+        if (this.controlNav) {
+          this.querySelector("#navCtrl").style.opacity=1;
+        }
+      },
+      _hideElActiveControls:function(e){
+        if (this.controlArrows) {
+          this._ctrlArrowView("hide");
+        }
+        if (this.controlNav) {
+          this.querySelector("#navCtrl").style.opacity=0;
+        }
+      },
+      _moveLeft: function(){
+        var elNow = this.slideElements[this.elActive];
+        this._ctrlArrowView("hide");
+        this.elActive = (this.elActive + (this._numSlideElements-1)) % this._numSlideElements;
+        var elNext = this.slideElements[this.elActive];
+        this._slide(elNow,elNext,"left");
+      },
+      _moveRight: function(){
+        var elNow = this.slideElements[this.elActive];
+        this._ctrlArrowView("hide");
+        this.elActive = (this.elActive + 1) % this._numSlideElements;
+        var elNext = this.slideElements[this.elActive];
+        this._slide(elNow,elNext,"right");
+      },
+      _moveTo:function(e){
+        var t = e.target;
+        var elNow = this.slideElements[this.elActive];
+        this.elActive = t.id.split("_")[1];
+        var elNext = this.slideElements[this.elActive];
+        this._slide(elNow,elNext);
+      },
+      _slide:function(elNow,elNext,dir){
+        dir = (dir==="right")?1:-1;
+        elNow.style.transition="1s";
+        elNow.style.left = ( dir * this.slideElementSizeX ) + "px";
+        this.listen(elNow,'transitionend', '_orderImg');
+        elNext.style.transition="1s";
+        elNext.style.left = 0;
+        elNext.style.top = 0;
+        if ( this.controlNav==="true" ) {
+          this.querySelector("#check_"+this.elActive).checked = "true";
+        }
+        history.pushState({}, null, "slide"+(this.elActive+1));
+      },
+      _ctrlArrowView: function(v){
+        v = (v==="hide")?0:1;
+        this.querySelector("#left_"+this.elActive).style.opacity = v;
+        this.querySelector("#right_"+this.elActive).style.opacity = v;
+      },
+      _orderImg: function(e){
+        this._unlistenTransition(e);
+        this._prv = (this.elActive + 1) % this._numSlideElements;
+        this._nxt = (this.elActive + (this._numSlideElements-1)) % this._numSlideElements;
+        var elPrv = this.slideElements[this._prv];
+        var elNxt = this.slideElements[this._nxt];
+
+        if (this._dirHello === "left" || this._dirHello === "right"){
+          elPrv.style.top = "0";
+          elPrv.style.left = -this.slideElementSizeX + "px";
+          elPrv.style.transition=false;
+          elNxt.style.top = "0";
+          elNxt.style.left = this.slideElementSizeX + "px";
+          elNxt.style.transition=false;
+        }
+        if (this._dirHello === "up" || this._dirHello === "down"){
+          var d = (this._dirHello==="up")?-1:1;
+          elPrv.style.top = (d * this.slideElementSizeY) + "px";
+          elPrv.style.left = "0";
+          elPrv.style.transition=false;
+          elNxt.style.top = (-d * this.slideElementSizeY) + "px";
+          elNxt.style.left = "0";
+          elNxt.style.transition=false;
+        }
+        //console.log(this._prv,this.elActive,this._nxt);
+        //console.log(this.slideElements[this._prv].style.left,this.slideElements[this.elActive].style.left,this.slideElements[this._nxt].style.left);
+        this.fire("mouseover");
+      },
+      _unlistenTransition:function(e) {
+        if ( e ) {
+          var t = e.target;
+          this.unlisten(t,'transitionend', '_orderImg');
+          this._autoplay();
+        }
+      },
+      _autoplay: function(){
+        if (this.autoplay>0) {
+          this._play();
+        }
+      },
+      _getDirs: function(){
+        var dirs = this.direction.split("-");
+        this._dirHello = dirs[1];
+        this._dirBye = dirs[0];
+
+      },
+      _resolveSizes: function() {
+        if ( this.slideElementSize !== 0 ){
+          this.slideElementSizeX = this.slideElementSize;
+          this.slideElementSizeY = this.slideElementSize;
+        }
+        this.style.width = this.slideElementSizeX + "px";
+        this.style.height = this.slideElementSizeY + "px";
+      },
+      _hideEl: function(e){
+        var t = e.target;
+        t.style.transition=false;
+        t.style.left = "100%";
+        t.removeEventListener('transitionend', this.parentNode._hideEl, false);
+      },
+      _addControls: function(){
+        var ctrlEl;
+        var ctrlNav;
+        if (this.controlNav){
+          ctrlNav = document.createElement("div");
+          ctrlNav.id = "navCtrl";
+          ctrlNav.className = "navCtrl";
+          this.appendChild(ctrlNav);
+        }
+        for(var i=0;i<this._numSlideElements;i++){
+          if (this.controlArrows) {
+            ctrlEl = document.createElement("label");
+            ctrlEl.id = "left_"+i;
+            ctrlEl.className = "labLeft";
+            ctrlEl.innerHTML = "<";
+            this.appendChild(ctrlEl);
+            ctrlEl.addEventListener("click", function(){ this._moveLeft(); }.bind(this) );
+
+            ctrlEl = document.createElement("label");
+            ctrlEl.id = "right_"+i;
+            ctrlEl.className = "labRight";
+            ctrlEl.innerHTML = ">";
+            this.appendChild(ctrlEl);
+            ctrlEl.addEventListener("click", function(){ this._moveRight(); }.bind(this) );
+          }
+          if (this.controlNav==="true"){
+            ctrlEl = document.createElement("input");
+            ctrlEl.id = "check_"+i;
+            ctrlEl.name = "ctrlNav";
+            if (i===this.elActive) {
+              ctrlEl.checked="true";
+            }
+            ctrlEl.className = "inpCheck";
+            ctrlEl.type = "radio";
+            ctrlNav.appendChild(ctrlEl);
+            ctrlEl.addEventListener("click", function(e){ this._moveTo(e); }.bind(this) );
+          }
+          if (this.controlNav==="carousel"){
+            ctrlEl = document.createElement("div");
+            ctrlEl.id = "thumb_"+i;
+            ctrlEl.className = "thumbSlide";
+            ctrlEl.style.width = "50px";
+            var s = this.slideElements[i].cloneNode(true);
+            s.style.width = "50px";
+            ctrlEl.appendChild(s);
+            this.appendChild(ctrlEl);
+          }
+        }
+      },
+      _play:function(){
+        setTimeout(function(){ this._moveLeft(); }.bind(this),this.autoplay);
+      },
+      attached:function(){
+        this.slideElements = this.querySelectorAll("*");
+        this._numSlideElements = this.slideElements.length;
+        var url = location.href;
+        var tmp = url.split("/slide")[1];
+        var slide = (tmp)?tmp.replace(/\//g,"") - 1:"0";
+        if (slide > this._numSlideElements || slide < 1) { slide = 0; history.pushState({}, null, "slide1"); }
+        this.elActive = slide;
+        console.log(slide);
+        this._resolveSizes();
+        this.slideElements[this.elActive].style.left = 0;
+        this._addControls();
+        this._getDirs();
+        this._orderImg();
+        if (this.autoplay>0) {
+          this.controlArrows = false;
+          this.controlNav = false;
+          this._play();
+        }
+      },
+      ready:function(){
+
+      }
+    });
+  </script>
+</dom-module>
