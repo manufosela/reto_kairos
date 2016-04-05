@@ -1,7 +1,9 @@
 /**
-  * TODO: mostrar slidethumbnails y navegar
+  * TODO: YES - mostrar slidethumbnails y navegar
+  *       controlar thumbnails como el slide, mostrando 3 y orderImg cada vez q se mueva. La animación implica 4 imagenes, pq siempre mostraremos 3
   *       carga dinámica de json de elementos del slide
   *       hacer kds-slideshowgroup e integrar varios kds-slideshow
+  *       Implementar propiedad step
   *       analizar slide-element-size para ver si lleva unidades y usarlas
   * NOTES:para usar varios slideshow, el principal tendrá sus elementos con z-index mayor
   *       los controles solo se mostraran en el declarado como principal en el kds-slideshowgroup
@@ -25,6 +27,15 @@
         top: 0;
         z-index: 10;
       }
+      :host ::content div img {
+        width:initial;
+        height:initial;
+        float:none;
+        display:inline-block;
+        position: relative;
+        left: 0;
+        top: 0;
+      }
       :host ::content label {
         width: 40px;
         height: 40px;
@@ -46,8 +57,8 @@
         display: block;
         position: absolute;
         left: 0;
-        top: 95%;
-        width: 100%;
+        top: 90%;
+        width: 200%;
         text-align: center;
         z-index: 100;
         opacity: 0;
@@ -55,6 +66,10 @@
       :host p { background:#F00; color:#FF0; z-index:10; }
       :host ::content label.labLeft { left:5px; }
       :host ::content label.labRight { right:5px; }
+      :host ::content .thumbSlide { width:50px; height:50px; position:relative; left:0; top:0; float:left; }
+      :host ::content img.thumbSlide, :host ::content div.thumbSlide { width:50px; height:50px; background:#FFF; overflow:hidden; margin:0 25px; border:2px solid black;}
+      :host ::content div.thumbSlide img { position:absolute; width:20px!important; height:20px!important; }
+      :host ::content img.thumbSlide.selected { border:2px solid red; top:-10px; }
     </style>
     <content></content>
   </template>
@@ -98,6 +113,10 @@
         autoplay:{
           type: Number,
           value: 0    // Value in milisecs between slides. 0 no autoplay
+        },
+        step:{
+          type: Number,
+          value:1
         },
         _numImgs:{
           type: Number,
@@ -154,6 +173,8 @@
         this._slide(elNow,elNext);
       },
       _slide:function(elNow,elNext,dir){
+        this._deselectThumb(elNow);
+        this._selectThumb();
         dir = (dir==="right")?1:-1;
         elNow.style.transition="1s";
         elNow.style.left = ( dir * this.slideElementSizeX ) + "px";
@@ -165,6 +186,24 @@
           this.querySelector("#check_"+this.elActive).checked = "true";
         }
         history.pushState({}, null, "slide"+(this.elActive+1));
+      },
+      _deselectThumb: function(el){
+        var i = el.id.split("_")[1];
+        var t = this.querySelector("#thumb_"+i);
+        t.style.top = 0;
+        t.style.width = "50px";
+        t.style.height = "50px";
+        t.style.transition = "0.5s";
+      },
+      _selectThumb: function(){
+        var t = this.querySelector("#thumb_"+this.elActive);
+        t.style.top = "-20px";
+        t.style.width = "70px";
+        t.style.height = "70px";
+        t.style.transition = "0.5s";
+        var navctrl = this.querySelector("#navCtrl")
+        navctrl.style.transition = "0.5s";
+        navctrl.style.left = (parseInt( document.querySelector("kds-slideshow").style.width) / 2 - 50 - this.elActive * 100) + "px";
       },
       _ctrlArrowView: function(v){
         v = (v==="hide")?0:1;
@@ -269,14 +308,20 @@
             ctrlEl.addEventListener("click", function(e){ this._moveTo(e); }.bind(this) );
           }
           if (this.controlNav==="carousel"){
-            ctrlEl = document.createElement("div");
+            var el = this.slideElements[i];
+            ctrlEl = document.createElement(el.tagName);
             ctrlEl.id = "thumb_"+i;
             ctrlEl.className = "thumbSlide";
-            ctrlEl.style.width = "50px";
-            var s = this.slideElements[i].cloneNode(true);
-            s.style.width = "50px";
-            ctrlEl.appendChild(s);
-            this.appendChild(ctrlEl);
+            if (el.tagName === "IMG") {
+              ctrlEl.src = this.slideElements[i].src;
+            }
+            if (el.tagName === "DIV") {
+              ctrlEl.innerHTML = this.slideElements[i].innerHTML;
+              ctrlEl.style.background = this.slideElements[i].style.background;
+              ctrlEl.style.fontSize = "8px";
+            }
+            ctrlNav.appendChild(ctrlEl);
+            ctrlEl.addEventListener("click", function(e){ this._moveTo(e); }.bind(this) );
           }
         }
       },
@@ -284,7 +329,7 @@
         setTimeout(function(){ this._moveLeft(); }.bind(this),this.autoplay);
       },
       attached:function(){
-        this.slideElements = this.querySelectorAll("*");
+        this.slideElements = this.children;
         this._numSlideElements = this.slideElements.length;
         var url = location.href;
         var tmp = url.split("/slide")[1];
@@ -295,6 +340,7 @@
         this._resolveSizes();
         this.slideElements[this.elActive].style.left = 0;
         this._addControls();
+        this._selectThumb();
         this._getDirs();
         this._orderImg();
         if (this.autoplay>0) {
