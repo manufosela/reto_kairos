@@ -83,64 +83,93 @@
     Polymer({
       is: 'kds-slideshow',
       properties:{
-        imgs:{
-          type: Object
-        },
-        slideElementSize:{ // renombrar a frameSize?
+        /*
+          The slide element size in px
+        */
+        slideElementSize:{
           type: Number,
           value: 0
         },
+        /*
+          The horizontal slide element size in px
+        */
         slideElementSizeX:{
           type: Number,
           value:0
         },
+        /*
+          The vertical slide element size in px
+        */
         slideElementSizeY:{
           type: Number,
           value:0
         },
+        /*
+          Actual active slide number (0 first)
+        */
         elActive:{
           type: Number,
           value: 0
         },
+        /*
+          slideshow direction: right-left, left-up, left-down, right-up, right-down, up-down
+        */
         direction:{
           type: String,
-          value: 'left-right'  // right-left, left-up, left-down, right-up, right-down, up-down
+          value: 'left-right'
         },
+        /*
+          Show control arrows: "false" or "true"
+        */
         controlArrows:{
           type: String,
           value: "false"
         },
+        /*
+          Show bottom control navigation: "true", "false", "carousel"
+        */
         controlNav:{
-          type: String,   // "true", "false", "carousel"
+          type: String,
           value:"false"
         },
+        /*
+          Value in milisecs between slides. 0 no autoplay
+        */
         autoplay:{
           type: Number,
-          value: 0    // Value in milisecs between slides. 0 no autoplay
+          value: 0
         },
+        /*
+          steps [in progress]
+        */
         step:{
           type: Number,
           value:1
         },
+        /*
+          url to get json data: [ { "title", "text", "image" } ]
+        */
         dataUrl:{
           type: String
         },
-        ajaxResponse:{
-          type: Object,
-          observer:'_processData'
-        },
-        _numImgs:{
-          type: Number,
-          value: 0
-        },
+        /*
+        /*
+          Direction from to hide slide
+        */
         _dirBye:{
           type: String, // right or left
           value:"right"
         },
+        /*
+          Direction from to show slide
+        */
         _dirHello:{
           type: String,
           value:"left" // up, down, left, right
         },
+        /*
+          touch events data array
+        */
         _touches:{
           type:Object,
           readOnly:true,
@@ -152,10 +181,15 @@
           }
         }
       },
+      /*
+        Listener events
+      */
       listeners:{
         'mouseover': '_showElActiveControls',
         'mouseout': '_hideElActiveControls'
       },
+      /*
+      */
       _showElActiveControls:function(e){
         if (this.controlArrows==="true") {
           this._ctrlArrowView("show");
@@ -164,6 +198,8 @@
           this.querySelector("#navCtrl").style.opacity=1;
         }
       },
+      /*
+      */
       _hideElActiveControls:function(e){
         if (this.controlArrows==="true") {
           this._ctrlArrowView("hide");
@@ -172,6 +208,8 @@
           this.querySelector("#navCtrl").style.opacity=0;
         }
       },
+      /*
+        */
       _moveLeft: function(){
         var elNow = this.slideElements[this.elActive];
         this._ctrlArrowView("hide");
@@ -179,6 +217,8 @@
         var elNext = this.slideElements[this.elActive];
         this._slide(elNow,elNext,"left");
       },
+      /*
+        */
       _moveRight: function(){
         var elNow = this.slideElements[this.elActive];
         this._ctrlArrowView("hide");
@@ -186,6 +226,8 @@
         var elNext = this.slideElements[this.elActive];
         this._slide(elNow,elNext,"right");
       },
+      /*
+        */
       _moveTo:function(event){
         var t = event.target;
         var elNow = this.slideElements[this.elActive];
@@ -193,6 +235,8 @@
         var elNext = this.slideElements[this.elActive];
         this._slide(elNow,elNext);
       },
+      /*
+        */
       _slide:function(elNow,elNext,dir){
         if (this.controlNav==="carousel" && this.controlNav!==false) {
           this._deselectThumb(elNow);
@@ -210,6 +254,8 @@
         }
         history.pushState({}, null, "slide"+(this.elActive+1));
       },
+      /*
+        */
       _deselectThumb: function(el){
         var i = el.id.split("_")[1];
         var t = this.querySelector("#thumb_"+i);
@@ -218,6 +264,8 @@
         t.style.height = "50px";
         t.style.transition = "0.5s";
       },
+      /*
+        */
       _selectThumb: function(){
         var t = this.querySelector("#thumb_"+this.elActive);
         t.style.top = "-20px";
@@ -415,6 +463,8 @@
       _play:function(){
         setTimeout(function(){ this._moveLeft(); }.bind(this),this.autoplay);
       },
+      /*
+        */
       _main:function(){
         this.slideElements = this.children;
         this._numSlideElements = this.slideElements.length;
@@ -439,6 +489,8 @@
           this._play();
         }
       },
+      /*
+        */
       _getElements: function(){
         if ( !this.querySelector("#iAjax") ) {
           var iAjax = document.createElement("iron-ajax");
@@ -455,6 +507,8 @@
           this.querySelector("#iAjax").addEventListener("error",this._ajaxError);
         }
       },
+      /*
+        */
       _processData: function(r){
         var els = r.detail.response;
         var slideElements = [];
@@ -486,6 +540,9 @@
       _ajaxError:function(e){
         console.dir(e);
       },
+      /*
+        To draw the slideshow
+      */
       run:function(){
         this.innerHTML = '';
         if (this.dataUrl) {
