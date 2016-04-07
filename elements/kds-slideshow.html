@@ -1,22 +1,27 @@
 /**
   * TODO: YES - mostrar slidethumbnails y navegar
-  *       controlar thumbnails como el slide, mostrando 3 y orderImg cada vez q se mueva. La animación implica 4 imagenes, pq siempre mostraremos 3
-  *       carga dinámica de json de elementos del slide
+  *       YES - controlar thumbnails como el slide, mostrando el activo mas grande
+  *       YES - carga dinámica de json de elementos del slide
   *       hacer kds-slideshowgroup e integrar varios kds-slideshow
   *       Implementar propiedad step
+  *       YES Añadir eventos touchmove
+  *       y scroll natural para mover los slides
   *       analizar slide-element-size para ver si lleva unidades y usarlas
+  *       reposicionar slides en funcion del espacio de la pagina
+  *       recalcular tamaño de slides en funcion del espacio de la página
+  *
   * NOTES:para usar varios slideshow, el principal tendrá sus elementos con z-index mayor
   *       los controles solo se mostraran en el declarado como principal en el kds-slideshowgroup
 **/
 <link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/components/kds-control-behavior.html">
 <dom-module id="kds-slideshow">
   <template>
     <style>
       :host{
         width:0;
         height:0;
-        position:absolute; top:0; left:150px;
+        position:absolute;
+        top:0; left:0;
         overflow:hidden;
       }
       :host ::content img, :host ::content div {
@@ -58,7 +63,7 @@
         position: absolute;
         left: 0;
         top: 90%;
-        width: 200%;
+        width: 100%;
         text-align: center;
         z-index: 100;
         opacity: 0;
@@ -77,7 +82,6 @@
   <script type="text/javascript">
     Polymer({
       is: 'kds-slideshow',
-      behaviors:[Polymer.KdsControlBehavior],
       properties:{
         imgs:{
           type: Object
@@ -103,8 +107,8 @@
           value: 'left-right'  // right-left, left-up, left-down, right-up, right-down, up-down
         },
         controlArrows:{
-          type: Boolean,
-          value: false
+          type: String,
+          value: "false"
         },
         controlNav:{
           type: String,   // "true", "false", "carousel"
@@ -118,6 +122,13 @@
           type: Number,
           value:1
         },
+        dataUrl:{
+          type: String
+        },
+        ajaxResponse:{
+          type: Object,
+          observer:'_processData'
+        },
         _numImgs:{
           type: Number,
           value: 0
@@ -129,6 +140,16 @@
         _dirHello:{
           type: String,
           value:"left" // up, down, left, right
+        },
+        _touches:{
+          type:Object,
+          readOnly:true,
+          value: {
+            "touchstart": {"x":-1, "y":-1},
+            "touchmove" : {"x":-1, "y":-1},
+            "touchend"  : false,
+            "direction" : "undetermined"
+          }
         }
       },
       listeners:{
@@ -136,18 +157,18 @@
         'mouseout': '_hideElActiveControls'
       },
       _showElActiveControls:function(e){
-        if (this.controlArrows) {
+        if (this.controlArrows==="true") {
           this._ctrlArrowView("show");
         }
-        if (this.controlNav) {
+        if (this.controlNav!=="false") {
           this.querySelector("#navCtrl").style.opacity=1;
         }
       },
       _hideElActiveControls:function(e){
-        if (this.controlArrows) {
+        if (this.controlArrows==="true") {
           this._ctrlArrowView("hide");
         }
-        if (this.controlNav) {
+        if (this.controlNav!=="false") {
           this.querySelector("#navCtrl").style.opacity=0;
         }
       },
@@ -165,16 +186,18 @@
         var elNext = this.slideElements[this.elActive];
         this._slide(elNow,elNext,"right");
       },
-      _moveTo:function(e){
-        var t = e.target;
+      _moveTo:function(event){
+        var t = event.target;
         var elNow = this.slideElements[this.elActive];
-        this.elActive = t.id.split("_")[1];
+        this.elActive = parseInt(t.id.split("_")[1]);
         var elNext = this.slideElements[this.elActive];
         this._slide(elNow,elNext);
       },
       _slide:function(elNow,elNext,dir){
-        this._deselectThumb(elNow);
-        this._selectThumb();
+        if (this.controlNav==="carousel" && this.controlNav!==false) {
+          this._deselectThumb(elNow);
+          this._selectThumb();
+        }
         dir = (dir==="right")?1:-1;
         elNow.style.transition="1s";
         elNow.style.left = ( dir * this.slideElementSizeX ) + "px";
@@ -201,9 +224,9 @@
         t.style.width = "70px";
         t.style.height = "70px";
         t.style.transition = "0.5s";
-        var navctrl = this.querySelector("#navCtrl")
+        var navctrl = this.querySelector("#navCtrl");
         navctrl.style.transition = "0.5s";
-        navctrl.style.left = (parseInt( document.querySelector("kds-slideshow").style.width) / 2 - 50 - this.elActive * 100) + "px";
+        navctrl.style.left = (parseInt( this.style.maxWidth) / 2 - 50 - this.elActive * 100) + "px";
       },
       _ctrlArrowView: function(v){
         v = (v==="hide")?0:1;
@@ -261,8 +284,18 @@
           this.slideElementSizeX = this.slideElementSize;
           this.slideElementSizeY = this.slideElementSize;
         }
-        this.style.width = this.slideElementSizeX + "px";
-        this.style.height = this.slideElementSizeY + "px";
+        if (this.slideElementSizeX === 0 || this.slideElementSizeY === 0){
+          console.warn("slideElementSize is 0");
+        }
+        if (this.slideElementSizeX > window.innerWidth || this.slideElementSizeY > window.innerHeight ) {
+          var newSize = ((window.innerWidth>window.innerHeight)?window.innerHeight:window.innerWidth);
+          this.slideElementSizeX = newSize;
+          this.slideElementSizeY = newSize;
+        }
+        this.style.maxWidth = this.slideElementSizeX + "px";
+        this.style.maxHeight = this.slideElementSizeY + "px";
+        this.style.width = "100%";
+        this.style.height = "100%";
       },
       _hideEl: function(e){
         var t = e.target;
@@ -271,64 +304,118 @@
         t.removeEventListener('transitionend', this.parentNode._hideEl, false);
       },
       _addControls: function(){
-        var ctrlEl;
         var ctrlNav;
-        if (this.controlNav){
+        if (this.controlNav==="carousel" || this.controlNav==="true"){
           ctrlNav = document.createElement("div");
           ctrlNav.id = "navCtrl";
           ctrlNav.className = "navCtrl";
+          if ( this.controlNav==="carousel") {
+            ctrlNav.style.width="400%";
+          }
           this.appendChild(ctrlNav);
         }
         for(var i=0;i<this._numSlideElements;i++){
-          if (this.controlArrows) {
-            ctrlEl = document.createElement("label");
-            ctrlEl.id = "left_"+i;
-            ctrlEl.className = "labLeft";
-            ctrlEl.innerHTML = "<";
-            this.appendChild(ctrlEl);
-            ctrlEl.addEventListener("click", function(){ this._moveLeft(); }.bind(this) );
-
-            ctrlEl = document.createElement("label");
-            ctrlEl.id = "right_"+i;
-            ctrlEl.className = "labRight";
-            ctrlEl.innerHTML = ">";
-            this.appendChild(ctrlEl);
-            ctrlEl.addEventListener("click", function(){ this._moveRight(); }.bind(this) );
+          if (this.controlArrows=="true") {
+            this._addControlArrows(i);
           }
           if (this.controlNav==="true"){
-            ctrlEl = document.createElement("input");
-            ctrlEl.id = "check_"+i;
-            ctrlEl.name = "ctrlNav";
-            if (i===this.elActive) {
-              ctrlEl.checked="true";
-            }
-            ctrlEl.className = "inpCheck";
-            ctrlEl.type = "radio";
-            ctrlNav.appendChild(ctrlEl);
-            ctrlEl.addEventListener("click", function(e){ this._moveTo(e); }.bind(this) );
+            this._addInputCheckNav(i,ctrlNav);
           }
           if (this.controlNav==="carousel"){
-            var el = this.slideElements[i];
-            ctrlEl = document.createElement(el.tagName);
-            ctrlEl.id = "thumb_"+i;
-            ctrlEl.className = "thumbSlide";
-            if (el.tagName === "IMG") {
-              ctrlEl.src = this.slideElements[i].src;
+            this._addThumbnailNav(i,ctrlNav);
+          }
+          this._addTouchEvents(i);
+        }
+      },
+      _addControlArrows: function(i){
+        var ctrlEl = document.createElement("label");
+        ctrlEl.id = "left_"+i;
+        ctrlEl.className = "labLeft";
+        ctrlEl.innerHTML = "<";
+        this.appendChild(ctrlEl);
+        ctrlEl.addEventListener("click", this._moveLeft.bind(this) );
+
+        ctrlEl = document.createElement("label");
+        ctrlEl.id = "right_"+i;
+        ctrlEl.className = "labRight";
+        ctrlEl.innerHTML = ">";
+        this.appendChild(ctrlEl);
+        ctrlEl.addEventListener("click", this._moveRight.bind(this) );
+      },
+      _addInputCheckNav:function(i,ctrlNav){
+        var ctrlEl = document.createElement("input");
+        ctrlEl.id = "check_"+i;
+        ctrlEl.name = "ctrlNav";
+        if (i===this.elActive) {
+          ctrlEl.checked="true";
+        }
+        ctrlEl.className = "inpCheck";
+        ctrlEl.type = "radio";
+        ctrlNav.appendChild(ctrlEl);
+        ctrlEl.addEventListener("click", this._moveTo.bind(this) );
+      },
+      _addThumbnailNav:function(i,ctrlNav){
+        var el = this.slideElements[i];
+        var ctrlEl = document.createElement(el.tagName);
+        ctrlEl.id = "thumb_"+i;
+        ctrlEl.className = "thumbSlide";
+        if (el.tagName === "IMG") {
+          ctrlEl.src = this.slideElements[i].src;
+        }
+        if (el.tagName === "DIV") {
+          ctrlEl.innerHTML = this.slideElements[i].innerHTML;
+          ctrlEl.style.background = this.slideElements[i].style.background;
+          ctrlEl.style.fontSize = "8px";
+        }
+        ctrlNav.appendChild(ctrlEl);
+        ctrlEl.addEventListener("click", this._moveTo.bind(this) );
+      },
+      _addTouchEvents: function(i){
+        var el = this.slideElements[i];
+        var isTouchSupported = 'ontouchstart' in window;
+        var startEvent = isTouchSupported ? 'touchstart' : 'mousedown';
+        var moveEvent = isTouchSupported ? 'touchmove' : 'mousemove';
+        var endEvent = isTouchSupported ? 'touchend' : 'mouseup';
+        el.addEventListener(startEvent, this._touchHandler.bind(this), false);
+        el.addEventListener(moveEvent, this._touchHandler.bind(this), false);
+        el.addEventListener(endEvent, this._touchHandler.bind(this), false);
+      },
+      _touchHandler: function(event) {
+        var touch;
+        if (typeof event !== 'undefined'){
+          event.preventDefault();
+          //console.log(event.type);
+          if (typeof event.touches !== 'undefined') {
+            touch = event.touches[0];
+            switch (event.type) {
+              case 'touchstart':
+              case 'touchmove':
+                this._touches[event.type].x = touch.pageX;
+                this._touches[event.type].y = touch.pageY;
+                break;
+              case 'touchend':
+                this._touches[event.type] = true;
+                if (this._touches.touchstart.x > -1 && this._touches.touchmove.x > -1) {
+                  if ( this._touches.touchstart.x < this._touches.touchmove.x) {
+                    this._touches.direction = "right";
+                    this._moveRight();
+                  } else {
+                    this._touches.direction = "left";
+                    this._moveLeft();
+                  }
+                  //console.log(this._touches.direction);
+                }
+                break;
+              default:
+                break;
             }
-            if (el.tagName === "DIV") {
-              ctrlEl.innerHTML = this.slideElements[i].innerHTML;
-              ctrlEl.style.background = this.slideElements[i].style.background;
-              ctrlEl.style.fontSize = "8px";
-            }
-            ctrlNav.appendChild(ctrlEl);
-            ctrlEl.addEventListener("click", function(e){ this._moveTo(e); }.bind(this) );
           }
         }
       },
       _play:function(){
         setTimeout(function(){ this._moveLeft(); }.bind(this),this.autoplay);
       },
-      attached:function(){
+      _main:function(){
         this.slideElements = this.children;
         this._numSlideElements = this.slideElements.length;
         var url = location.href;
@@ -336,21 +423,82 @@
         var slide = (tmp)?tmp.replace(/\//g,"") - 1:"0";
         if (slide > this._numSlideElements || slide < 1) { slide = 0; history.pushState({}, null, "slide1"); }
         this.elActive = slide;
-        console.log(slide);
+        console.info("La slide seleccionada es la número " + slide);
         this._resolveSizes();
         this.slideElements[this.elActive].style.left = 0;
         this._addControls();
-        this._selectThumb();
+        if (this.controlNav==="carousel") {
+          this._selectThumb();
+        }
         this._getDirs();
         this._orderImg();
+        //this._fixPosition();
         if (this.autoplay>0) {
-          this.controlArrows = false;
-          this.controlNav = false;
+          this.controlArrows = "false";
+          //this.controlNav = "false";
           this._play();
         }
       },
+      _getElements: function(){
+        if ( !this.querySelector("#iAjax") ) {
+          var iAjax = document.createElement("iron-ajax");
+          iAjax.setAttribute("id","iAjax");
+          iAjax.setAttribute("url",this.dataUrl);
+          iAjax.setAttribute("handle-as","json");
+          iAjax.setAttribute("auto","true");
+          if ( !this.querySelector("#slel_0") ) {
+            this.appendChild(iAjax);
+          } else {
+            this.insertBefore(iAjax, this.querySelector("#slel_0"));
+          }
+          this.querySelector("#iAjax").addEventListener("response",this._processData.bind(this));
+          this.querySelector("#iAjax").addEventListener("error",this._ajaxError);
+        }
+      },
+      _processData: function(r){
+        var els = r.detail.response;
+        var slideElements = [];
+        var el;
+        for(var i=0;i<els.length;i++) {
+          if (els[i].image) {
+            el = document.createElement("img");
+            el.alt = els[i].title;
+            el.src = els[i].image;
+          } else if (els[i].text) {
+            el = document.createElement("div");
+            el.title = els[i].title;
+            el.innerHTML = els[i].text;
+          }
+          el.id = "slel_" + i;
+          this.appendChild(el);
+        }
+        this.removeChild(this.children[0]);
+        this._main();
+      },
+      _fixPosition: function(){
+        var wW = window.innerWidth;
+        var wH = window.innerHeight;
+        var pLeft = wW / 2 - this.slideElementSizeX / 2 + "px";
+        var pTop = wH / 2 -  this.slideElementSizeY / 2 + "px";
+        this.style.top = pTop;
+        this.style.left = pLeft;
+      },
+      _ajaxError:function(e){
+        console.dir(e);
+      },
+      run:function(){
+        this.innerHTML = '';
+        if (this.dataUrl) {
+          this._getElements();
+        } else {
+          this._main();
+        }
+      },
+      attached:function(){
+        this.run();
+      },
       ready:function(){
-
+        console.info("Component Ready!");
       }
     });
   </script>

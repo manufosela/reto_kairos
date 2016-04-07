@@ -16,6 +16,8 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "^1.4.0"
+    "polymer": "^1.4.0",
+    "iron-ajax": "^1.2.0",
+    "paper-elements": "^1.0.7"
   }
 }

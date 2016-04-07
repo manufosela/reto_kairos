@@ -3,16 +3,67 @@
   <head>
     <meta charset="UTF-8">
     <title>Reto Kairós</title>
-    <link rel="import" href="/components/kds-slideshow.html">
-    <script type="text/javascript">
-      document.addEventListener("WebComponentsReady", function(e){
-        var c = document.querySelector("kds-slideshow").$.container.children;
-        console.log(c);
-      });
-    </script>
+
+    <meta name="description" content="Reto Kairós">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <script src="/assets/scripts/main.js" type="text/javascript"></script>
+    <link rel="import" href="/elements/elements.html">
   </head>
-  <body>
-    <kds-slideshow id="main" slide-element-size="548" control-arrows="true" control-nav="carousel" autoplay="0" direction="right-down">
+
+  <body unresolved>
+    <div class="horizontal layout wrap" style="height:100%">
+      <div id="sideleft" class="flex-1 sideleft">
+        <header>
+          <img class="kairos" src="/assets/img/kairos-digital-solutions.svg" alt="Kairos Digital Solutions">
+        </header>
+        <h2>Kairós' Polymer Challenge</h2>
+        <paper-dropdown-menu label="Dirección">
+          <paper-listbox class="dropdown-content" selected="0" id="direction">
+            <paper-item>left-right</paper-item>
+            <paper-item>left-down</paper-item>
+            <paper-item>left-up</paper-item>
+            <paper-item>right-down</paper-item>
+            <paper-item>right-up</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <paper-dropdown-menu label="Flechas de control">
+          <paper-listbox class="dropdown-content" selected="0"  id="control-arrows">
+            <paper-item active>true</paper-item>
+            <paper-item>false</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <paper-dropdown-menu label="Barra de navegación">
+          <paper-listbox class="dropdown-content" selected="1" id="control-nav">
+            <paper-item>true</paper-item>
+            <paper-item>false</paper-item>
+            <paper-item>carousel</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+
+        <paper-input id="data-url" label="url de datos" value="/assets/data/data.json"></paper-input>
+        <paper-button raised class="custom indigo">Cargar datos</paper-button>
+
+        <p>Tamaño del slide</p>
+        <paper-slider id="slide-element-size" min="50" max="700" value="500" editable></paper-slider>
+
+        <paper-checkbox id="autoplay">autoplay</paper-checkbox>
+      </div>
+      <div id="miniheader"><img src="/assets/img/icon-hamburger.png" width="32px" height="32px"><h3>Kairós' Polymer Challenge</h3></div>
+
+      <div class="flex-4">
+        <kds-slideshow id="main-slideshow" class="mySlide" data-url="/assets/data/data.json"  slide-element-size="500" control-arrows="true" control-nav="false" autoplay="0" direction="left-right"></kds-slideshow>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+<!-- Otra opcion sin usar json ajax es añadir las imagenes/textos como content del componente
+
+    <kds-slideshow data-url="/assets/data/data2.json" id="main" img-class="imgclass" slide-element-size="500" control-arrows="true" control-nav="carousel" autoplay="0" direction="right-down">
       <img id="slel_0" src="/assets/img/imagen1.png" />
       <img id="slel_1" src="/assets/img/imagen2.jpg" />
       <img id="slel_2" src="/assets/img/imagen3.png" />
@@ -26,5 +77,4 @@
         Lorem ipsum dolor sit amet, consectetur adipisicing elit. Atque obcaecati quisquam laborum reiciendis ex deleniti, omnis labore odit perferendis cum ut quo in! Provident aliquid debitis, qui ducimus obcaecati architecto.
       </div>
     </kds-slideshow>
-  </body>
-</html>
+-->

@@ -1,0 +1,11 @@
+[
+  { "title" : "Carlos Moure", "text" : "Nuestro Yoda, Partner de Kairós", "image" : "/assets/img/carlos_moure.jpg" },
+  { "title" : "Elisa Colina", "text" : "La administradora de talentos princesa Eli", "image" : "/assets/img/eli.jpg" },
+  { "title" : "Reinaldo Aguilera", "text" : "El Lando Calrissian que organiza batallas contra el lado oscuro", "image" : "/assets/img/rei.jpg" },
+  { "title" : "Juan Caja", "text" : "EL Scrum Master Obi-Juan Kenobi", "image" : "/assets/img/juan_caja.jpg" },
+  { "title" : "Jorge del Casar", "text" : "Luke FrontEnd-Walker, the fucking master", "image" : "/assets/img/yorch.png" },
+  { "title" : "Álvaro Isorna", "text" : "Nuestro Han Solo, lo mismo pilota un desarollo que gestiona un contrabando de proyectos", "image" : "/assets/img/alvaro.jpg" },
+  { "title" : "Mánu Fosela", "text" : "Chewbacca, el copiloto-developer", "image" : "/assets/img/manufosela.jpg" },
+  { "title" : "Kus Cámara", "text" : "R2-D-Kus, el CSS no tiene secretos para ella ", "image" : "/assets/img/kus.jpg" },
+  { "title" : "Fer", "text" : "Fer3-PO, habla todas las lenguas mobile", "image" : "/assets/img/fer.jpg"  }
+]
