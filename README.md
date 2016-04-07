@@ -1,1 +1,3 @@
-# reto_kairos
+# Kairós' Polymer Challenge
+
+Demo: [http://pruebas.manufosela.es]
