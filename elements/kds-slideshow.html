@@ -530,8 +530,8 @@
         this._main();
       },
       _fixPosition: function(){
-        var wW = window.innerWidth;
-        var wH = window.innerHeight;
+        var wW = this.parentNode.innerWidth;
+        var wH = this.parentNode.innerHeight;
         var pLeft = wW / 2 - this.slideElementSizeX / 2 + "px";
         var pTop = wH / 2 -  this.slideElementSizeY / 2 + "px";
         this.style.top = pTop;
