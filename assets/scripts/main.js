@@ -6,9 +6,14 @@ window.addEventListener('DOMContentLoaded', function(e){
   var urlDatos = document.querySelector("#data-url");
   var slideElementSize = document.querySelector("#slide-element-size");
   var autoplay = document.querySelector("#autoplay");
+  var sideright = document.querySelector("#sideright");
 
   sshow.addEventListener("push-state", function(e){
     history.pushState({}, null, "slide"+(e.detail.elActive+1));
+  });
+
+  sideright.addEventListener("click", function(e){
+    hideham();
   });
 
   direction.addEventListener("iron-select", function(e){
