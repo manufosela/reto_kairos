@@ -471,7 +471,7 @@
         var url = location.href;
         var tmp = url.split("/slide")[1];
         var slide = (tmp)?tmp.replace(/\//g,"") - 1:"0";
-        if (slide > this._numSlideElements || slide < 1) { slide = 0; history.pushState({}, null, "slide1"); }
+        if (slide > this._numSlideElements || slide < 1) { slide = 0; this.fire("push-state", {elActive:0}); }
         this.elActive = slide;
         console.info("La slide seleccionada es la número " + slide);
         this._resolveSizes();
