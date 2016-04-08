@@ -7,6 +7,10 @@ window.addEventListener('DOMContentLoaded', function(e){
   var slideElementSize = document.querySelector("#slide-element-size");
   var autoplay = document.querySelector("#autoplay");
 
+  sshow.addEventListener("push-state", function(e){
+    history.pushState({}, null, "slide"+(e.detail.elActive+1));
+  });
+
   direction.addEventListener("iron-select", function(e){
     console.log( e.target.selectedItem.innerText.replace(/^\s*/,"").replace(/\s*$/,"") );
     sshow.direction = e.target.selectedItem.innerText.replace(/^\s*/,"").replace(/\s*$/,"");

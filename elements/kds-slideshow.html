@@ -7,8 +7,8 @@
   *       YES Añadir eventos touchmove
   *       y scroll natural para mover los slides
   *       analizar slide-element-size para ver si lleva unidades y usarlas
-  *       reposicionar slides en funcion del espacio de la pagina
-  *       recalcular tamaño de slides en funcion del espacio de la página
+  *       YES reposicionar slides en funcion del espacio de la pagina
+  *       YES recalcular tamaño de slides en funcion del espacio de la página
   *
   * NOTES:para usar varios slideshow, el principal tendrá sus elementos con z-index mayor
   *       los controles solo se mostraran en el declarado como principal en el kds-slideshowgroup
@@ -20,7 +20,7 @@
       :host{
         width:0;
         height:0;
-        position:absolute;
+        position:relative;
         top:0; left:0;
         overflow:hidden;
       }
@@ -252,7 +252,7 @@
         if ( this.controlNav==="true" ) {
           this.querySelector("#check_"+this.elActive).checked = "true";
         }
-        history.pushState({}, null, "slide"+(this.elActive+1));
+        this.fire("push-state",{elActive:this.elActive});
       },
       /*
         */
